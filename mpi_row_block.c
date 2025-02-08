@@ -267,8 +267,8 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    if(rank==0){
     int block=n/size;
   	for(int i=0; i<size; i++){
-      	disp_out[i]=i*block;
-      	num[i]=1;
+      	   disp_out[i]=i*block;
+      	   num[i]=1;
   	}
   	if(n/size < 1){
      	   int count=0, j=0;
@@ -289,7 +289,7 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    MPI_Type_free(&local_block_type);
    
    if(rank==0){
-  	 MPI_Type_free(&send_block_type);
-  	 MPI_Type_free(&out_block_type);
+      MPI_Type_free(&send_block_type);
+      MPI_Type_free(&out_block_type);
    }
 }

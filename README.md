@@ -10,3 +10,9 @@
 <p>change the cd command to the directory where the code is</p>
 <p>Run: dos2unix parco_h2.pbs</p>
 <p>Submit the job: qsub parco_h2.pbs</p>
+
+<p>The send_recv.c file is the same as mpi_row_block.c but with another version of the transposition routine that I used to compare the approaches</p>
+<p>To compile and run it:</p>
+<p>mpicc send_recv.c -o sr -fopenmp</p>
+<p>mpirun -np N ./sr SIZE</p>
+<p>does not work when the number of processors exceed the matrix size</p>

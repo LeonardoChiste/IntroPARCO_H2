@@ -154,24 +154,32 @@ void matTransposeOMP(double *M, double *T, int t, int n){
 }
 }
 int checkSymMPI(double* M, int n, int rank, int size){
-   int symmetric=0, symmetry=0;
-   MPI_Bcast(M, (n*n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-   if(n/size>1){
+  int symmetric=0, symmetry=0;
+  MPI_Bcast(M, (n*n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  if(n/size>=1){
      int begin=rank*n/size;
      int end=(rank+1)*n/size;
+     if(n/size>1){ 
+        begin=(rank*n/size)/2;
+        end=begin + (n/size)/2;
+     }
      for(int i=begin; i<end; i++){
+   	for(int j=i+1; j<n; j++){
+       	  if( *(M + j*n + i) != *(M + i*n + j)) symmetric=1;
+   	}
+     }
+     if(end>1){
+       for(int i=n-end; i<n-begin; i++){
    	  for(int j=i+1; j<n; j++){
-       	     if( *(M + j*n + i) != *(M + i*n + j)) symmetric=1;
+       	    if( *(M + j*n + i) != *(M + i*n + j)) symmetric=1;
    	  }
+       }
      }
    }else{
-     int i, q=rank/n;
-     i=rank%n;
-     int block=n*n/size;
-     int begin=(1 + q)*block;
-     int end=begin + block;
-     for(int j=begin; j<end; j++){
-     	if(*(M + j + i*n ) != *(M + i + (j)*n)) symmetric=1;
+     for(int i=rank%n; i<rank%n + 1; i++){
+     	  for(int j=0; j<n; j++){
+            if(*(M + i + j*n) != *(M + j +i*n )) symmetric=1;
+        }
      }
    }
    MPI_Reduce(&symmetric, &symmetry, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

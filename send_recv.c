@@ -208,7 +208,7 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
       }
       if(rank==0){
   	    for(int i=0; i<n/size; i++){
-     	     for(int j=0; j<n; j++)
+     	        for(int j=0; j<n; j++)
         	   *(T + j*n + i) = *(M + i*n + j);
    	    }
   	    MPI_Datatype out_block_type;
@@ -221,7 +221,7 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
   	    MPI_Type_commit(&out_block_type);
   	    MPI_Type_free(&temp_block_type);
   	    for(int i=1; i<size; i++){
-     	     MPI_Recv(T + i*n/size, 1, out_block_type, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+     	      MPI_Recv(T + i*n/size, 1, out_block_type, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   	    }
   	    MPI_Type_free(&out_block_type);
      }

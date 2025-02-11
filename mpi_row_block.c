@@ -27,42 +27,43 @@ int main(int argc, char** argv) {
    n=atoi(argv[1]);
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &size);
+   
    if(size>n*n){
-  	MPI_Finalize();
-  	printf("error1: number of processors too big for the matrix\n");
-  	return 1;
+      if(rank==0) printf("error1: number of processors too big for the matrix\n");
+      MPI_Finalize();
+      return 1;
    }
    if(size%2 != 0 && size!=1){
-  	MPI_Finalize();
-  	printf("error2: uneven number of processors\n");
-  	return 1;
+      if(rank==0) printf("error2: uneven number of processors\n");
+      MPI_Finalize();
+      return 1;
    }
    M=(double*)malloc(n*n*sizeof(double));
    if(rank==0){
      T=(double*)malloc(n*n*sizeof(double));
-  	for(int i=0; i<n; i++){
-      	    for(int j=0; j<n; j++){
+     for(int i=0; i<n; i++){
+      	for(int j=0; j<n; j++){
           	*(M + i*n + j)=1.0 + i*0.5 + j*0.1;
-      	    }
-        }
+      	}
+     }
    }
    if(rank==0) printf("\n%d x %d | %d ", n, n, size);
    
    if(rank==0){
-  	wt1=MPI_Wtime();
+    wt1=MPI_Wtime();
     symmetry=checkSym(M, n);
-  	matTranspose(M, T, n);
-  	wt2=MPI_Wtime();
-  	printf("| sequential: %f ", wt2-wt1);
+    matTranspose(M, T, n);
+    wt2=MPI_Wtime();
+    printf("| sequential: %f ", wt2-wt1);
    }
    if(rank==0){
-  	wt1=MPI_Wtime();
+    wt1=MPI_Wtime();
    #ifdef _OPENMP
     symmetry=checkSymOMP(M, size, n);
-  	matTransposeOMP(M, T, size, n);
+    matTransposeOMP(M, T, size, n);
    #endif
-  	wt2=MPI_Wtime();
-  	printf("| OMP: %f ", wt2-wt1);
+    wt2=MPI_Wtime();
+    printf("| OMP: %f ", wt2-wt1);
     if(symmetry==0) 
        printf("| symmetric ");
     else 
@@ -80,20 +81,20 @@ int main(int argc, char** argv) {
       if(symmetry==0) 
          printf("| symmetric ");
       else 
-         printf("| not symmetric ");
+         printf("| not symmetric %d ", symmetry);
    }
    
    if(rank==0){
-  	 int transposed=0;
-  	 for(int i=0; i<n; i++){
-      	     for(int j=0; j<n; j++){
+     int transposed=0;
+     for(int i=0; i<n; i++){
+      	for(int j=0; j<n; j++){
           	if( *(M + i*n + j) != *(T + j*n + i)) transposed=1;
-      	     }
-  	 }
+      	}
+     }
      if(transposed == 0)
   	   printf("| transposed");
      else 
-       printf("not transposed");
+       printf("| not transposed");
    }
    if(rank==0){
   	free(M);
@@ -105,10 +106,10 @@ int main(int argc, char** argv) {
 
 void printM(double *M, int n, int g){
    for(int i=0; i<n; i++){
-   	for(int j=0; j<g; j++){
-       	    printf("%2.2g\t", *(M + i*n +j));
-   	}
-   	printf("\n");
+      for(int j=0; j<g; j++){
+       	printf("%2.2g\t", *(M + i*n +j));
+      }
+      printf("\n");
    }
 }
 int checkSym(double *M, int n){
@@ -124,7 +125,7 @@ int checkSym(double *M, int n){
 void matTranspose(double *M, double *T, int n){
    for (int i = 0; i < n; ++i){
     	for (int j = 0; j < n; ++j) {
-            *(T + j*n + i) = *(M + i*n + j);
+         	*(T + j*n + i) = *(M + i*n + j);
     	}
    }
 }
@@ -148,15 +149,15 @@ void matTransposeOMP(double *M, double *T, int t, int n){
    #pragma omp for collapse(2) schedule(static, 8)
    for (int i = 0; i < n; ++i){
     	for (int j = 0; j < n; ++j) {
-            *(T + j*n + i) = *(M + i*n + j);
+         	*(T + j*n + i) = *(M + i*n + j);
     	}
    }
 }
 }
 int checkSymMPI(double* M, int n, int rank, int size){
-  int symmetric=0, symmetry=0;
-  MPI_Bcast(M, (n*n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  if(n/size>=1){
+   int symmetric=0, symmetry=0;
+   MPI_Bcast(M, (n*n), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   if(n/size>=1){
      int begin=rank*n/size;
      int end=(rank+1)*n/size;
      if(n/size>1){ 
@@ -170,9 +171,9 @@ int checkSymMPI(double* M, int n, int rank, int size){
      }
      if(end>1){
        for(int i=n-end; i<n-begin; i++){
-   	  for(int j=i+1; j<n; j++){
+   	for(int j=i+1; j<n; j++){
        	    if( *(M + j*n + i) != *(M + i*n + j)) symmetric=1;
-   	  }
+   	}
        }
      }
    }else{
@@ -201,10 +202,10 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    MPI_Datatype out_block_type;
    MPI_Datatype local_block_type;
    if(n/size<1){
-       subsizes[0]=1;
-       subsizes[1]=(n*n)/size;
-       sizes[0]=1;
-       sizes[1]=n*n/size;
+      subsizes[0]=1;
+      subsizes[1]=(n*n)/size;
+      sizes[0]=1;
+      sizes[1]=n*n/size;
    }
    MPI_Type_create_subarray(2, sizes, subsizes, start, MPI_ORDER_C, MPI_DOUBLE, &block_type);
    MPI_Type_commit(&block_type);
@@ -215,7 +216,7 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
          if(n/size<1){
      	    subsizes[0]=1;
      	    subsizes[1]=(n*n)/size;
-  	 }
+         }
   	 MPI_Datatype root_block_type;
   	 MPI_Type_create_subarray(2, sizes, subsizes, start, MPI_ORDER_C, MPI_DOUBLE, &root_block_type);
   	 MPI_Type_create_resized(root_block_type, 0, 1*sizeof(double), &send_block_type);
@@ -225,18 +226,18 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    
    if(rank==0){
     int block=n*n/size;
-  	for(int i=0; i<size; i++){
-      	   disp[i]=i*block;
-      	   num[i]=1;
-  	}
+    for(int i=0; i<size; i++){
+      	disp[i]=i*block;
+      	num[i]=1;
+     }
    }
    MPI_Scatterv(M, num, disp, send_block_type, local_M, 1, block_type, 0, MPI_COMM_WORLD);
    double* local_T=(double*)malloc(n*n*sizeof(double)/size);
    if(n/size<1){
-      subsizes2[0]=(n*n)/size;
-      subsizes2[1]=1;
-      sizes2[0]=n*n/size;
-      sizes2[1]=1;
+     	subsizes2[0]=(n*n)/size;
+     	subsizes2[1]=1;
+        sizes2[0]=n*n/size;
+        sizes2[1]=1;
    }
    MPI_Type_create_subarray(2, sizes2, subsizes2, start2, MPI_ORDER_C, MPI_DOUBLE, &local_block_type);
    MPI_Type_commit(&local_block_type);
@@ -246,8 +247,8 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
   	 int subsizes2[2]={n, n/size};
   	 int start2[2]={0, 0};
          if(n/size<1){
-     	     subsizes2[0]=(n*n)/size;
-     	     subsizes2[1]=1;
+     	   subsizes2[0]=(n*n)/size;
+     	   subsizes2[1]=1;
   	 }
   	 MPI_Datatype temp_block_type;
   	 MPI_Type_create_subarray(2, sizes2, subsizes2, start2, MPI_ORDER_C, MPI_DOUBLE, &temp_block_type);
@@ -259,7 +260,7 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    if(n/size>=1){
   	for(int i=0; i<n/size; i++){
      	   for(int j=0; j<n; j++){
-              *(local_T + j*n/size + i)= *(local_M + i*n + j);
+        	*(local_T + j*n/size + i)= *(local_M + i*n + j);
      	   }
   	}
    }else{
@@ -273,21 +274,21 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    }*/
    int disp_out[size];
    if(rank==0){
-    int block=n/size;
+        int block=n/size;
   	for(int i=0; i<size; i++){
-      	   disp_out[i]=i*block;
-      	   num[i]=1;
+      	  disp_out[i]=i*block;
+      	  num[i]=1;
   	}
   	if(n/size < 1){
-     	   int count=0, j=0;
-     	   for(int i=0; i<size; i++){
-                disp_out[i]=j + count*n * n*n/size;
+     	  int count=0, j=0;
+     	  for(int i=0; i<size; i++){
+         	disp_out[i]=j + count*n * n*n/size;
          	count++;
          	if(count >= size/n){
-            	   j++;
-            	   count=0;
-                }
-     	   }
+            	  j++;
+            	  count=0;
+         	}
+     	  }
   	}
    }
    MPI_Gatherv(local_T, 1, local_block_type, T, num, disp_out, out_block_type, 0, MPI_COMM_WORLD);
@@ -297,7 +298,7 @@ void matTransposeMPI(double* M, double* T, int n, int rank, int size){
    MPI_Type_free(&local_block_type);
    
    if(rank==0){
-      MPI_Type_free(&send_block_type);
-      MPI_Type_free(&out_block_type);
+  	 MPI_Type_free(&send_block_type);
+  	 MPI_Type_free(&out_block_type);
    }
 }
